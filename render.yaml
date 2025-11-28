@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: color-fix-match
+    name: colorfixmatch
     env: python
     plan: free
     region: frankfurt
