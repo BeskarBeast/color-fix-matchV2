@@ -4,12 +4,11 @@ services:
     env: python
     plan: free
     region: frankfurt
-    branch: master    # ← CHANGE THIS FROM main TO master
-    rootDir: color-fix-match
+    branch: master
 
     buildCommand: pip install -r requirements.txt
 
-    startCommand: python server.py
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
 
     envVars:
       - key: PYTHON_VERSION
