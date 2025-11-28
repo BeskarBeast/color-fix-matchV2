@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: color-fix-match
+    env: python
+    plan: free
+    region: frankfurt
+    branch: main
+
+    buildCommand: |
+      python -m pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+
+    startCommand: python server.py
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+
+    autoDeploy: true

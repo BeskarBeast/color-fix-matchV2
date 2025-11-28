@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paint Color Detector</title>
+
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    #language-selector {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 200;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: box-shadow 0.2s ease;
+    }
+
+    #language-selector:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    #lang-btn {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    #lang-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    #lang-arrow {
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid #666;
+      transition: transform 0.2s ease;
+    }
+
+    #language-selector.open #lang-arrow {
+      transform: rotate(180deg);
+    }
+
+    #lang-dropdown {
+      position: absolute;
+      top: 48px;
+      right: 0;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      width: 130px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+    }
+
+    #lang-dropdown.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    #lang-dropdown div {
+      padding: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    #lang-dropdown div:hover {
+      background: #f0f0f0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      user-select: none;
+      position: relative;
+    }
+    h1, h2 {
+      margin: 0 0 24px;
+      font-weight: 700;
+      color: #222;
+    }
+    h2 { 
+      font-weight: 600; 
+      color: #555; 
+    }
+
+    input[type="file"] { display: none; }
+    
+    .file-actions {
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center;
+      gap: 10px; 
+      margin-bottom: 15px;
+    }
+    
+    .file-label {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #007bff;
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-align: center;
+      min-width: 130px;
+    }
+    .file-label:hover, .file-label:focus { 
+      background-color: #0056b3; 
+      outline: none; 
+    }
+
+    button {
+      margin-top: 10px;
+      background: #007bff;
+      border: none;
+      padding: 12px 28px;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: 600;
+      width: 100%;
+    }
+    button:hover, button:focus { 
+      background: #0056b3; 
+      outline: none; 
+    }
+
+    #drop-area {
+      margin-top: 20px;
+      border: 2px dashed #bbb;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      color: #666;
+      font-size: 14px;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    #drop-area.dragover {
+      background-color: #e7f0ff;
+      border-color: #007bff;
+      color: #007bff;
+    }
+
+    #preview-container {
+      margin-top: 20px;
+      position: relative;
+      width: 100%;
+      max-height: 300px;
+      min-height: 200px;
+      border-radius: 12px;
+      background: #fafafa;
+      border: 2px solid #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    #preview {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: none;
+      cursor: pointer;
+    }
+    #placeholder {
+      position: absolute;
+      color: #bbb;
+      font-size: 16px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    #loading { 
+      margin-top: 20px; 
+      display: none; 
+    }
+    #loading .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 28px; 
+      height: 28px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { 
+      0% { transform: rotate(0deg); } 
+      100% { transform: rotate(360deg); } 
+    }
+
+    #status-message { 
+      margin-top: 12px; 
+      font-size: 14px;
+      color: #cc0000; 
+      min-height: 18px; 
+    }
+
+    #result {
+      margin-top: 24px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    #result.visible { opacity: 1; }
+
+    #color-box {
+      width: 60px; 
+      height: 60px;
+      border-radius: 12px;
+      border: 2px solid #ddd;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+    
+    .color-info { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 8px; 
+      align-items: flex-start; 
+    }
+    
+    .color-row { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
+    
+    .color-value {
+      background: #f5f5f5;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-family: monospace;
+      cursor: pointer;
+      user-select: all;
+      transition: background-color 0.2s ease;
+    }
+    .color-value:hover { 
+      background-color: #e0e0e0; 
+    }
+
+    .section { 
+      margin-bottom: 20px; 
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 20px; padding-top: 50px; }
+      button { padding: 12px; }
+      .file-label { padding: 10px 20px; font-size: 14px; }
+      #color-box { width: 50px; height: 50px; }
+      #result { flex-direction: column; gap: 10px; }
+      .color-info { align-items: center; }
+      .file-actions { flex-direction: column; gap: 8px; }
+      #preview-container { min-height: 150px; }
+      
+      #language-selector {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      
+      #language-selector:hover {
+        box-shadow: none;
+      }
+      
+      #lang-name,
+      #lang-arrow {
+        display: none;
+      }
+      
+      #lang-btn {
+        width: 24px;
+        height: 24px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+      }
+      
+      #lang-dropdown {
+        top: 32px;
+      }
+    }
+
+    .copy-tooltip {
+      position: absolute;
+      background: #007bff;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translateY(-10px);
+      z-index: 10;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 36px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" role="main" aria-label="Car Paint Color Detector">
+    <!-- Language Selector - Mobile Only Inside Container -->
+    <div id="language-selector" class="mobile-lang">
+      <img id="lang-btn" src="/static/images/globe.png" alt="Language">
+      <span id="lang-name">English</span>
+      <div id="lang-arrow"></div>
+      <div id="lang-dropdown">
+        <div data-lang="en">English</div>
+        <div data-lang="lv">Latviešu</div>
+      </div>
+    </div>
+
+    <h2>Color Fix Match</h2>
+    <h1>Paint Color Detector</h1>
+
+    <div class="section file-actions">
+      <input type="file" id="image" accept="image/*" aria-label="Choose image file" />
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" aria-label="Take a picture with camera" />
+      <label for="image" class="file-label" tabindex="0">Choose Image</label>
+      <label for="cameraInput" class="file-label" tabindex="0">Take a Picture</label>
+    </div>
+
+    <div class="section">
+      <button id="detectBtn" aria-live="polite" aria-busy="false">Detect Color</button>
+    </div>
+
+    <div class="section" id="drop-area" tabindex="0" aria-label="Drag and drop an image here or click Choose Image button">
+      Drag & Drop an image here or click "Choose Image"
+    </div>
+
+    <div class="section" id="preview-container" aria-live="polite" aria-atomic="true">
+      <img id="preview" alt="Image preview" />
+      <div id="placeholder">No image selected yet</div>
+    </div>
+
+    <div class="section" id="loading" aria-live="assertive" aria-atomic="true">
+      <div class="spinner" role="progressbar" aria-label="Loading"></div>
+      <div>Detecting color...</div>
+    </div>
+
+    <div class="section" id="status-message" role="alert" aria-live="assertive"></div>
+
+    <div class="section" id="result" aria-live="polite" aria-atomic="true">
+      <div id="color-box" aria-label="Detected color preview"></div>
+      <div class="color-info">
+        <div class="color-row"><strong>HEX:</strong> <span id="hex" class="color-value" tabindex="0" title="Click to copy HEX color"></span></div>
+        <div class="color-row"><strong>RGB:</strong> <span id="rgb" class="color-value" tabindex="0" title="Click to copy RGB color"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="image-modal" class="modal" aria-hidden="true">
+    <span id="close-modal" class="close" aria-label="Close">&times;</span>
+    <img id="modal-img" alt="Full image view" />
+  </div>
+
+<script>
+/* ———————————————— LANGUAGE SYSTEM ———————————————— */
+const langBtn = document.getElementById("lang-btn");
+const langMenu = document.getElementById("lang-dropdown");
+const langSelector = document.getElementById("language-selector");
+const langName = document.getElementById("lang-name");
+
+let translations = {};
+let currentLang = localStorage.getItem("lang");
+
+if (!currentLang) {
+  const browserLang = (navigator.language || "en").toLowerCase();
+  if (browserLang.startsWith("lv")) currentLang = "lv";
+  else currentLang = "en";
+  localStorage.setItem("lang", currentLang);
+}
+
+// Update language name display
+function updateLangName(lang) {
+  langName.textContent = lang === "en" ? "English" : "Latviešu";
+}
+
+updateLangName(currentLang);
+
+/* Toggle dropdown */
+langSelector.addEventListener("click", () => {
+  langMenu.classList.toggle("visible");
+  langSelector.classList.toggle("open");
+});
+
+/* Close when clicking outside */
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#language-selector")) {
+    langMenu.classList.remove("visible");
+    langSelector.classList.remove("open");
+  }
+});
+
+/* Select language */
+langMenu.querySelectorAll("div").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const lang = btn.dataset.lang;
+    localStorage.setItem("lang", lang);
+    currentLang = lang;
+    updateLangName(lang);
+    loadLanguage(lang);
+    langMenu.classList.remove("visible");
+    langSelector.classList.remove("open");
+  });
+});
+
+/* Load translations */
+async function loadLanguage(lang) {
+  try {
+    const res = await fetch(`/static/locales/${lang}/translation.json`);
+    translations = await res.json();
+    applyTranslations();
+  } catch (err) {
+    console.error("Translation loading error:", err);
+  }
+}
+
+function applyTranslations() {
+  document.querySelector("h1").textContent = translations.title;
+  document.querySelector("h2").textContent = translations.subtitle;
+
+  document.querySelector("label[for='image']").textContent = translations.chooseImage;
+  document.querySelector("label[for='cameraInput']").textContent = translations.takePicture;
+
+  document.getElementById("detectBtn").textContent = translations.detectColor;
+  document.getElementById("drop-area").textContent = translations.dragDrop;
+
+  document.getElementById("placeholder").textContent = translations.noImage;
+  document.querySelector("#loading div:last-child").textContent = translations.detecting;
+
+  document.querySelectorAll(".color-row strong")[0].textContent = translations.hexLabel;
+  document.querySelectorAll(".color-row strong")[1].textContent = translations.rgbLabel;
+}
+
+loadLanguage(currentLang);
+
+/* ———————————————— MAIN FUNCTIONALITY ———————————————— */
+
+const fileInput = document.getElementById("image");
+const cameraInput = document.getElementById("cameraInput");
+const preview = document.getElementById("preview");
+const placeholder = document.getElementById("placeholder");
+const result = document.getElementById("result");
+const loading = document.getElementById("loading");
+const statusMessage = document.getElementById("status-message");
+const colorBox = document.getElementById("color-box");
+const hexText = document.getElementById("hex");
+const rgbText = document.getElementById("rgb");
+const detectBtn = document.getElementById("detectBtn");
+const dropArea = document.getElementById("drop-area");
+const modal = document.getElementById("image-modal");
+const modalImg = document.getElementById("modal-img");
+const closeModal = document.getElementById("close-modal");
+
+function resetUI() {
+  loading.style.display = "none";
+  statusMessage.textContent = "";
+  result.classList.remove("visible");
+  colorBox.style.backgroundColor = "transparent";
+  hexText.textContent = "";
+  rgbText.textContent = "";
+}
+
+function showPreview(file) {
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+  placeholder.style.display = "none";
+}
+
+function copyToClipboard(text, event) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  try { 
+    document.execCommand("copy"); 
+    if (!/Mobi|Android/i.test(navigator.userAgent)) {
+      showTooltipAtCursor(event, "Copied!");
+    }
+  } catch (err) { 
+    console.error("Failed to copy text", err); 
+  }
+  document.body.removeChild(textarea);
+}
+
+function showTooltipAtCursor(event, message = "Copied!") {
+  const tooltip = document.createElement("div");
+  tooltip.className = "copy-tooltip";
+  tooltip.textContent = message;
+  document.body.appendChild(tooltip);
+  const cursorX = event.clientX, cursorY = event.clientY;
+  tooltip.style.left = `${cursorX - tooltip.offsetWidth / 2}px`;
+  tooltip.style.top = `${cursorY - tooltip.offsetHeight - 8}px`;
+  tooltip.style.opacity = 1; 
+  tooltip.style.transform = "translateY(0)";
+  setTimeout(() => { 
+    tooltip.style.opacity = 0; 
+    tooltip.style.transform = "translateY(-10px)"; 
+    setTimeout(() => tooltip.remove(), 300); 
+  }, 1000);
+}
+
+[hexText, rgbText].forEach(el => {
+  el.addEventListener("click", e => copyToClipboard(el.textContent, e));
+  el.addEventListener("keydown", e => { 
+    if (e.key === "Enter" || e.key === " ") {
+      copyToClipboard(el.textContent, e); 
+    }
+  });
+});
+
+preview.addEventListener("click", () => { 
+  if (preview.src) { 
+    modal.style.display = "flex"; 
+    modalImg.src = preview.src; 
+    modal.setAttribute("aria-hidden", "false"); 
+  } 
+});
+
+closeModal.addEventListener("click", () => { 
+  modal.style.display = "none"; 
+  modal.setAttribute("aria-hidden", "true"); 
+});
+
+modal.addEventListener("click", e => { 
+  if (e.target === modal) { 
+    modal.style.display = "none"; 
+    modal.setAttribute("aria-hidden", "true"); 
+  } 
+});
+
+dropArea.addEventListener("dragover", e => { 
+  e.preventDefault(); 
+  dropArea.classList.add("dragover"); 
+});
+
+dropArea.addEventListener("dragleave", e => { 
+  e.preventDefault(); 
+  dropArea.classList.remove("dragover"); 
+});
+
+dropArea.addEventListener("drop", e => {
+  e.preventDefault(); 
+  dropArea.classList.remove("dragover");
+  if (e.dataTransfer.files.length) {
+    const file = e.dataTransfer.files[0];
+    if (file.type.startsWith("image/")) {
+      const dt = new DataTransfer(); 
+      dt.items.add(file); 
+      fileInput.files = dt.files;
+      showPreview(file); 
+      resetUI();
+    } else {
+      statusMessage.textContent = "Please drop a valid image file.";
+    }
+  }
+});
+
+dropArea.addEventListener("click", () => fileInput.click());
+
+dropArea.addEventListener("keydown", e => { 
+  if (e.key === "Enter" || e.key === " ") { 
+    e.preventDefault(); 
+    fileInput.click(); 
+  } 
+});
+
+[fileInput, cameraInput].forEach(input => input.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (file) { 
+    showPreview(file); 
+    resetUI(); 
+  } else { 
+    preview.style.display = "none"; 
+    placeholder.style.display = "block"; 
+  }
+}));
+
+detectBtn.addEventListener("click", async () => {
+  const file = fileInput.files[0] || cameraInput.files[0];
+  if (!file) { 
+    statusMessage.textContent = translations.uploadError || "Please upload or take a photo."; 
+    return; 
+  }
+  
+  resetUI(); 
+  showPreview(file); 
+  loading.style.display = "block"; 
+  detectBtn.setAttribute("aria-busy", "true");
+  
+  const form = new FormData(); 
+  form.append("image", file);
+  
+  try {
+    const response = await fetch("/color", { method: "POST", body: form });
+    const data = await response.json();
+    
+    loading.style.display = "none"; 
+    detectBtn.setAttribute("aria-busy", "false");
+    
+    if (data.error) { 
+      statusMessage.textContent = "Error: " + data.error; 
+      return; 
+    }
+    
+    colorBox.style.backgroundColor = data.hex;
+    hexText.textContent = data.hex;
+    rgbText.textContent = data.rgb.join(", ");
+    result.classList.add("visible");
+    
+  } catch (err) { 
+    loading.style.display = "none"; 
+    detectBtn.setAttribute("aria-busy", "false"); 
+    statusMessage.textContent = translations.serverError || "Could not contact server. Please try again."; 
+  }
+});
+</script>
+</body>
+</html>

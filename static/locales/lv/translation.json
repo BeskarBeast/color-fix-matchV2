@@ -1,0 +1,14 @@
+{
+  "title": "Krāsu detektors",
+  "subtitle": "Color Fix Match",
+  "chooseImage": "Izvēlēties attēlu",
+  "takePicture": "Uzņemt foto",
+  "detectColor": "Noteikt krāsu",
+  "dragDrop": "Velciet un nometiet attēlu šeit vai spiediet \"Izvēlēties attēlu\"",
+  "noImage": "Attēls vēl nav izvēlēts",
+  "detecting": "Notiek krāsas atpazīšana...",
+  "uploadError": "Lūdzu, augšupielādējiet vai uzņemiet foto.",
+  "serverError": "Neizdevās sazināties ar serveri. Mēģiniet vēlreiz.",
+  "hexLabel": "HEX:",
+  "rgbLabel": "RGB:"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Paint Color Detector",
+  "subtitle": "Color Fix Match",
+  "chooseImage": "Choose Image",
+  "takePicture": "Take a Picture",
+  "detectColor": "Detect Color",
+  "dragDrop": "Drag & Drop an image here or click \"Choose Image\"",
+  "noImage": "No image selected yet",
+  "detecting": "Detecting color...",
+  "uploadError": "Please upload or take a photo.",
+  "serverError": "Could not contact server. Please try again.",
+  "hexLabel": "HEX:",
+  "rgbLabel": "RGB:"
+}
